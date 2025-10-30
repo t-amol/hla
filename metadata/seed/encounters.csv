@@ -1,0 +1,4 @@
+encounter_id,patient,provider,start_time,end_time,encounter_type
+E100,P001,PR01,2025-10-01T09:00:00,2025-10-01T09:30:00,outpatient
+E101,P002,PR02,2025-10-02T11:10:00,2025-10-02T12:00:00,emergency
+E102,P003,PR01,2025-10-03T15:00:00,2025-10-03T15:25:00,outpatient

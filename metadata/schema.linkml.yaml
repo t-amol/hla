@@ -1,0 +1,73 @@
+id: https://example.org/health/schema
+name: health_schema
+prefixes:
+  linkml: https://w3id.org/linkml/
+  hs: https://example.org/health/
+imports:
+  - linkml:types
+default_prefix: hs
+default_range: string
+
+classes:
+  Patient:
+    attributes:
+      patient_id: {identifier: true, range: string}
+      first_name: {range: string}
+      last_name: {range: string}
+      gender: {range: Gender}
+      birth_date: {range: date}
+      address: {range: string}
+  Provider:
+    attributes:
+      provider_id: {identifier: true}
+      name: {range: string}
+      specialty: {range: string}
+  Encounter:
+    attributes:
+      encounter_id: {identifier: true}
+      patient: {range: Patient, required: true}
+      provider: {range: Provider}
+      start_time: {range: datetime}
+      end_time: {range: datetime}
+      encounter_type: {range: EncounterType}
+  Observation:
+    attributes:
+      observation_id: {identifier: true}
+      patient: {range: Patient, required: true}
+      encounter: {range: Encounter}
+      code: {range: string}
+      value: {range: float}
+      unit: {range: string}
+      effective_time: {range: datetime}
+  MedicationOrder:
+    attributes:
+      order_id: {identifier: true}
+      patient: {range: Patient, required: true}
+      encounter: {range: Encounter}
+      medication_code: {range: string}
+      dose_mg: {range: float}
+      frequency_per_day: {range: integer}
+      start_date: {range: date}
+      end_date: {range: date}
+  LabResult:
+    attributes:
+      lab_id: {identifier: true}
+      patient: {range: Patient, required: true}
+      encounter: {range: Encounter}
+      test_name: {range: string}
+      result_value: {range: float}
+      reference_low: {range: float}
+      reference_high: {range: float}
+      collected_time: {range: datetime}
+
+enums:
+  Gender:
+    permissible_values:
+      male: {}
+      female: {}
+      other: {}
+  EncounterType:
+    permissible_values:
+      outpatient: {}
+      inpatient: {}
+      emergency: {}

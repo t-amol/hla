@@ -1,0 +1,3 @@
+order_id,patient,encounter,medication_code,dose_mg,frequency_per_day,start_date,end_date
+M1,P002,E101,ATC-C09AA,5,1,2025-10-02,2025-10-12
+M2,P001,E100,ATC-A10BA,500,2,2025-10-01,2025-10-31

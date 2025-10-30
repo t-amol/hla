@@ -1,0 +1,3 @@
+lab_id,patient,encounter,test_name,result_value,reference_low,reference_high,collected_time
+L1,P001,E100,HbA1c,6.2,4.0,6.0,2025-10-01T08:50:00
+L2,P002,E101,CRP,18.0,0.0,5.0,2025-10-02T10:40:00

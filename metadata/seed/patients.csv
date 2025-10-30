@@ -1,0 +1,6 @@
+patient_id,first_name,last_name,gender,birth_date,address
+P001,Asha,Naik,female,1986-03-14,12 MG Road
+P002,Rohan,Patil,male,1979-07-22,44 FC House
+P003,Meera,Joshi,female,1992-11-05,9 North Lane
+P004,Imran,Khan,male,1984-01-18,17 Lake View
+P005,Li,Wei,other,1990-08-30,88 Orchard

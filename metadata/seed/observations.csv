@@ -1,0 +1,4 @@
+observation_id,patient,encounter,code,value,unit,effective_time
+O1,P001,E100,BP_SYS,120,mmHg,2025-10-01T09:05:00
+O2,P001,E100,BP_DIA,78,mmHg,2025-10-01T09:06:00
+O3,P003,E102,HR,72,bpm,2025-10-03T15:10:00
