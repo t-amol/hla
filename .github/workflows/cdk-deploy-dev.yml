@@ -1,42 +1,76 @@
-name: CDK Deploy (Dev)
+name: Deploy DEV
+
 on:
-  workflow_dispatch:
   push:
-    branches: [ main ]
-    paths:
-      - '.infra/cdk/**'
-      - '.github/workflows/cdk-deploy-dev.yml'
+    branches: [ master ]
+  workflow_dispatch: {}
+
+permissions:
+  id-token: write
+  contents: read
+
 env:
   AWS_REGION: ${{ secrets.AWS_REGION }}
-  AWS_ROLE_TO_ASSUME: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+  ROLE_ARN: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+  ECR_REGISTRY: ${{ secrets.ECR_REGISTRY }}
   CDK_STACK_NAME: ${{ secrets.CDK_STACK_NAME }}
+  BACKEND_IMAGE: hla-backend:latest
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-      contents: read
-    defaults:
-      run:
-        working-directory: .infra/cdk
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Install CDK deps
-        run: npm ci || npm install
-
-      - name: Configure AWS creds (OIDC)
+      - name: Configure AWS (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ env.AWS_ROLE_TO_ASSUME }}
+          role-to-assume: ${{ env.ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Synthesize
-        run: npx cdk synth
+      - name: Login to ECR
+        uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Deploy
-        run: npx cdk deploy $CDK_STACK_NAME --require-approval never
+      - name: Get backend repo URI (SSM)
+        id: ecruri
+        run: |
+          uri=$(aws ssm get-parameter --name /hla/dev/backendRepoUri --query "Parameter.Value" --output text)
+          echo "uri=$uri" >> $GITHUB_OUTPUT
+
+      - name: Build & push backend
+        run: |
+          docker build -t "${{ env.BACKEND_IMAGE }}" -f backend/Dockerfile .
+          docker tag "${{ env.BACKEND_IMAGE }}" "${{ steps.ecruri.outputs.uri }}"
+          docker push "${{ steps.ecruri.outputs.uri }}"
+
+      - name: Install Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Build frontend
+        working-directory: ./frontend
+        run: |
+          npm ci
+          npm run build
+
+      - name: Upload frontend to S3
+        id: s3info
+        run: |
+          bucket=$(aws ssm get-parameter --name /hla/dev/frontendBucketName --query "Parameter.Value" --output text)
+          aws s3 sync frontend/dist "s3://$bucket" --delete
+          echo "bucket=$bucket" >> $GITHUB_OUTPUT
+
+      - name: Invalidate CloudFront
+        run: |
+          dist=$(aws ssm get-parameter --name /hla/dev/frontendDistributionId --query "Parameter.Value" --output text)
+          aws cloudfront create-invalidation --distribution-id "$dist" --paths "/*" --region us-east-1
+
+      - name: CDK synth & deploy
+        working-directory: .infra/cdk
+        run: |
+          npm ci
+          npx cdk synth
+          npx cdk deploy "${{ env.CDK_STACK_NAME }}" --require-approval never

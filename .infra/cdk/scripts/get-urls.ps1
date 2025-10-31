@@ -13,7 +13,7 @@ if (-not $alb) {
 }
 if (-not $cf) {
   $distId = aws ssm get-parameter --name /hla/dev/frontendDistributionId --region $Region --profile $Profile --query "Parameter.Value" --output text 2>$null
-  if ($distId) { $cf = aws cloudfront get-distribution --id $distId --query "Distribution.DomainName" --output text }
+  if ($distId) { $cf = aws cloudfront get-distribution --id $distId --query "Distribution.DomainName" --output text --region us-east-1 --profile $Profile }
 }
 
 Write-Host "Backend ALB : http://$alb"
