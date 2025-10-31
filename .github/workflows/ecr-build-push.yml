@@ -1,0 +1,53 @@
+name: Build & Push Images
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+    paths:
+      - 'backend/**'
+      - 'frontend/**'
+      - '.github/workflows/ecr-build-push.yml'
+env:
+  AWS_REGION: ${{ secrets.AWS_REGION }}
+  AWS_ROLE_TO_ASSUME: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+  ECR_REGISTRY: ${{ secrets.ECR_REGISTRY }}
+
+jobs:
+  build-push:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS creds (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.AWS_ROLE_TO_ASSUME }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Buildx setup
+        uses: docker/setup-buildx-action@v3
+
+      - name: Backend build & push
+        if: ${{ hashFiles('backend/Dockerfile') != '' }}
+        run: |
+          IMAGE=${{ env.ECR_REGISTRY }}/hla-backend
+          docker build -t $IMAGE:sha-${{ github.sha }} -f backend/Dockerfile backend
+          docker tag $IMAGE:sha-${{ github.sha }} $IMAGE:latest
+          docker push $IMAGE:sha-${{ github.sha }}
+          docker push $IMAGE:latest
+
+      - name: Frontend build & push
+        if: ${{ hashFiles('frontend/Dockerfile') != '' }}
+        run: |
+          IMAGE=${{ env.ECR_REGISTRY }}/hla-frontend
+          docker build -t $IMAGE:sha-${{ github.sha }} -f frontend/Dockerfile frontend
+          docker tag $IMAGE:sha-${{ github.sha }} $IMAGE:latest
+          docker push $IMAGE:sha-${{ github.sha }}
+          docker push $IMAGE:latest

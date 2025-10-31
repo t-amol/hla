@@ -1,0 +1,42 @@
+name: CDK Deploy (Dev)
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+    paths:
+      - '.infra/cdk/**'
+      - '.github/workflows/cdk-deploy-dev.yml'
+env:
+  AWS_REGION: ${{ secrets.AWS_REGION }}
+  AWS_ROLE_TO_ASSUME: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+  CDK_STACK_NAME: ${{ secrets.CDK_STACK_NAME }}
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    defaults:
+      run:
+        working-directory: .infra/cdk
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install CDK deps
+        run: npm ci || npm install
+
+      - name: Configure AWS creds (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.AWS_ROLE_TO_ASSUME }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Synthesize
+        run: npx cdk synth
+
+      - name: Deploy
+        run: npx cdk deploy $CDK_STACK_NAME --require-approval never
