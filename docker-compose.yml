@@ -72,6 +72,8 @@ services:
       - "${BACKEND_PORT:-8000}:${BACKEND_PORT:-8000}"
     volumes:
       - ./backend:/app
+      - ./metadata:/app/metadata:ro
+      - ./pipelines:/app/pipelines:ro
 
   frontend:
     build:
