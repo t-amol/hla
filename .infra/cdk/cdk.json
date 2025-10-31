@@ -1,6 +1,7 @@
 {
-  "app": "node -r ts-node/register bin/hla.ts",
-  "context": {
-    "@aws-cdk/core:newStyleStackSynthesis": "true"
+  "app": "tsx bin/hla.ts",
+  "watch": {
+    "include": ["**"],
+    "exclude": ["cdk.out", "node_modules"]
   }
 }
